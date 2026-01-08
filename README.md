@@ -54,8 +54,8 @@ tests/        - test suite
 
 ## Actions
 
-- **CNode**: between frontier pairs
-- **Face**: Rz gadget (deg==1, non-trivial angle)  
+- **CNOT**: between frontier pairs
+- **Phase**: Rz gadget (deg==1, non-trivial angle)  
 - **Clifford**: 1q Clifford gates
 
 ## Training
