@@ -6,18 +6,16 @@ from src.diag import DiagramState, EPS
 
 
 @dataclass
-class CNodeAction:
-    """Add CNode between two frontier nodes."""
+class CNOTAction:
     u: int
     v: int
 
     def __str__(self):
-        return f"CNode({self.u}, {self.v})"
+        return f"CNOT({self.u}, {self.v})"
 
 
 @dataclass
-class FaceAction:
-    """Extract face gadget (Z-rotation) from frontier node."""
+class PhaseAction:
     u: int
     theta: float
 
@@ -27,7 +25,6 @@ class FaceAction:
 
 @dataclass
 class CliffordAction:
-    """Apply single-qubit Clifford gate."""
     u: int
     kind: str
 
@@ -35,19 +32,19 @@ class CliffordAction:
         return f"{self.kind}({self.u})"
 
 
-Action = Union[CNodeAction, FaceAction, CliffordAction]
+Action = Union[CNOTAction, PhaseAction, CliffordAction]
 
 
 def validate_action(state: DiagramState, action: Action) -> None:
-    if isinstance(action, CNodeAction):
+    if isinstance(action, CNOTAction):
         assert action.u in state.frontier, f"Node {action.u} not in frontier"
         assert action.v in state.frontier, f"Node {action.v} not in frontier"
-        assert action.u != action.v, f"Cannot create CNode with same node"
+        assert action.u != action.v, f"Cannot create CNOT with same node"
 
-    elif isinstance(action, FaceAction):
+    elif isinstance(action, PhaseAction):
         assert action.u in state.frontier, f"Node {action.u} not in frontier"
         assert state.graph.vertex_degree(action.u) == 1, \
-            f"Node {action.u} must have degree 1 for face extraction"
+            f"Node {action.u} must have degree 1 for phase extraction"
         assert state.graph.type(action.u) == zx.VertexType.Z, \
             f"Node {action.u} must be Z-spider for face extraction"
         phase = state.graph.phase(action.u)
@@ -60,15 +57,15 @@ def validate_action(state: DiagramState, action: Action) -> None:
 def apply_action(state: DiagramState, action: Action) -> None:
     validate_action(state, action)
 
-    if isinstance(action, CNodeAction):
-        _apply_cnode(state, action)
-    elif isinstance(action, FaceAction):
-        _apply_face(state, action)
+    if isinstance(action, CNOTAction):
+        _apply_cnot(state, action)
+    elif isinstance(action, PhaseAction):
+        _apply_phase(state, action)
     elif isinstance(action, CliffordAction):
         _apply_clifford(state, action)
 
 
-def _apply_cnode(state: DiagramState, action: CNodeAction) -> None:
+def _apply_cnot(state: DiagramState, action: CNOTAction) -> None:
     u, v = action.u, action.v
 
     qubit_u = _node_to_qubit(state, u)
@@ -88,7 +85,7 @@ def _apply_cnode(state: DiagramState, action: CNodeAction) -> None:
                 state.frontier.add(neighbor)
 
 
-def _apply_face(state: DiagramState, action: FaceAction) -> None:
+def _apply_phase(state: DiagramState, action: PhaseAction) -> None:
     u = action.u
     theta = action.theta
 
@@ -126,22 +123,22 @@ def generate_candidates(state: DiagramState, max_pairs: int = 100) -> List[Actio
     candidates = []
     frontier_list = list(state.frontier)
 
-    cnode_pairs = []
+    cnot_pairs = []
     for i, u in enumerate(frontier_list):
         for v in frontier_list[i+1:]:
-            cnode_pairs.append(CNodeAction(u, v))
+            cnot_pairs.append(CNOTAction(u, v))
 
-    if len(cnode_pairs) > max_pairs:
-        cnode_pairs = cnode_pairs[:max_pairs]
+    if len(cnot_pairs) > max_pairs:
+        cnot_pairs = cnot_pairs[:max_pairs]
 
-    candidates.extend(cnode_pairs)
+    candidates.extend(cnot_pairs)
 
     for u in frontier_list:
         if state.graph.vertex_degree(u) == 1 and \
            state.graph.type(u) == zx.VertexType.Z:
             phase = state.graph.phase(u)
             if abs(phase) > EPS:
-                candidates.append(FaceAction(u, phase))
+                candidates.append(PhaseAction(u, phase))
 
     for u in frontier_list:
         vtype = state.graph.type(u)

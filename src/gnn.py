@@ -7,7 +7,7 @@ from torch_geometric.data import Data, Batch
 from torch_geometric.nn import GCNConv, global_mean_pool
 
 from src.diag import DiagramState, NUM_NODE_TYPES
-from src.act import Action, CNodeAction, FaceAction, CliffordAction
+from src.act import Action, CNOTAction, PhaseAction, CliffordAction
 
 
 class GNNPolicy(nn.Module):
@@ -30,13 +30,13 @@ class GNNPolicy(nn.Module):
 
         self.global_proj = nn.Linear(hidden_dim, hidden_dim)
 
-        self.cnode_scorer = nn.Sequential(
+        self.cnot_scorer = nn.Sequential(
             nn.Linear(hidden_dim * 3, hidden_dim),
             nn.ReLU(),
             nn.Linear(hidden_dim, 1)
         )
 
-        self.face_scorer = nn.Sequential(
+        self.phase_scorer = nn.Sequential(
             nn.Linear(hidden_dim * 2, hidden_dim),
             nn.ReLU(),
             nn.Linear(hidden_dim, 1)
@@ -101,19 +101,19 @@ class GNNPolicy(nn.Module):
 
         logits = []
         for action in candidates:
-            if isinstance(action, CNodeAction):
+            if isinstance(action, CNOTAction):
                 u_idx = v_to_idx[action.u]
                 v_idx = v_to_idx[action.v]
                 u_emb = node_embs[u_idx]
                 v_emb = node_embs[v_idx]
                 feat = torch.cat([u_emb, v_emb, global_emb])
-                logit = self.cnode_scorer(feat)
+                logit = self.cnot_scorer(feat)
 
-            elif isinstance(action, FaceAction):
+            elif isinstance(action, PhaseAction):
                 u_idx = v_to_idx[action.u]
                 u_emb = node_embs[u_idx]
                 feat = torch.cat([u_emb, global_emb])
-                logit = self.face_scorer(feat)
+                logit = self.phase_scorer(feat)
 
             elif isinstance(action, CliffordAction):
                 u_idx = v_to_idx[action.u]

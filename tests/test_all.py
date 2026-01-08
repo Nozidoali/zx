@@ -5,7 +5,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import pyzx as zx
 from src.diag import DiagramState, from_pyzx_graph
-from src.act import CNodeAction, FaceAction, CliffordAction, generate_candidates, apply_action
+from src.act import CNOTAction, PhaseAction, CliffordAction, generate_candidates, apply_action
 from src.qasm import circuit_to_qasm, validate_qasm
 from src.gnn import GNNPolicy
 
@@ -16,7 +16,7 @@ def test_cnode_rejects_non_frontier():
     
     non_frontier = [v for v in graph.vertices() if v not in state.frontier]
     if len(non_frontier) >= 2:
-        action = CNodeAction(non_frontier[0], non_frontier[1])
+        action = CNOTAction(non_frontier[0], non_frontier[1])
         with pytest.raises(AssertionError):
             apply_action(state, action)
 
@@ -27,7 +27,7 @@ def test_face_requires_deg_1():
     
     for v in state.frontier:
         if state.graph.vertex_degree(v) > 1:
-            action = FaceAction(v, 0.5)
+            action = PhaseAction(v, 0.5)
             with pytest.raises(AssertionError):
                 apply_action(state, action)
             break

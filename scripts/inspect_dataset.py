@@ -8,13 +8,13 @@ import numpy as np
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from src.utils import ensure_dir
-from src.act import CNodeAction, FaceAction, CliffordAction
+from src.act import CNOTAction, PhaseAction, CliffordAction
 
 
 def action_to_dict(action):
-    if isinstance(action, CNodeAction):
+    if isinstance(action, CNOTAction):
         return {'type': 'CNode', 'u': action.u, 'v': action.v}
-    elif isinstance(action, FaceAction):
+    elif isinstance(action, PhaseAction):
         return {'type': 'Face', 'vertices': list(action.vertices)}
     elif isinstance(action, CliffordAction):
         return {'type': 'Clifford', 'qubit': action.qubit, 'gate': action.gate}

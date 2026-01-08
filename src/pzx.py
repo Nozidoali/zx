@@ -58,16 +58,16 @@ def run_pyzx_with_trace(graph: zx.Graph, trace_file: str, verbose: bool = False)
         if not candidates:
             break
 
-        from src.act import FaceAction, CNodeAction, CliffordAction
+        from src.act import PhaseAction, CNOTAction, CliffordAction
 
-        face_actions = [a for a in candidates if isinstance(a, FaceAction)]
-        cnode_actions = [a for a in candidates if isinstance(a, CNodeAction)]
+        phase_actions = [a for a in candidates if isinstance(a, PhaseAction)]
+        cnot_actions = [a for a in candidates if isinstance(a, CNOTAction)]
         clifford_actions = [a for a in candidates if isinstance(a, CliffordAction)]
 
-        if face_actions:
-            action = face_actions[0]
-        elif cnode_actions:
-            action = min(cnode_actions, key=lambda a: (a.u, a.v))
+        if phase_actions:
+            action = phase_actions[0]
+        elif cnot_actions:
+            action = min(cnot_actions, key=lambda a: (a.u, a.v))
         elif clifford_actions:
             action = clifford_actions[0]
         else:
