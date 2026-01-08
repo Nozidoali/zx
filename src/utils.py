@@ -44,4 +44,3 @@ def log_verbose(msg: str, verbose: bool = False):
 def fail(msg: str):
     print(f"ERROR: {msg}", file=sys.stderr)
     sys.exit(1)
-
